@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How a change travels through FTDS — SDLC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#18233b;
+    --ink-soft:#3a465f;
+    --slate:#6b7688;
+    --slate-2:#96a0b0;
+    --hair:#e4e7ec;
+    --hair-2:#eef0f3;
+    --paper:#ffffff;
+    --bg:#f6f7f9;
+    --teal:#1f5d63;      /* through-line accent */
+    --teal-soft:#e7f0f0;
+    --amber:#d99a00;     /* critical */
+    --amber-soft:#fbf2dc;
+    --red:#c0392b;       /* escalate */
+    --green:#1c7a52;     /* release / healthy */
+    --green-soft:#e8f4ee;
+    --ra-red:#e5231b;    /* Rockwell red */
+    --ra-red-soft:#fdeceb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Barlow',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:28px 22px 60px;
+  }
+  .sheet{max-width:1240px;margin:0 auto;background:var(--paper);
+    border:1px solid var(--hair);border-radius:2px;
+    box-shadow:0 1px 2px rgba(24,35,59,.05),0 8px 30px rgba(24,35,59,.06);}
+
+  /* ---- masthead ---- */
+  .top{display:flex;justify-content:space-between;align-items:flex-start;
+    padding:22px 30px 16px;border-bottom:2px solid var(--ink);gap:20px;}
+  .eyebrow{font-family:'Barlow Semi Condensed';font-weight:600;font-size:11px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--ra-red);}
+  h1{font-size:25px;font-weight:700;letter-spacing:-.01em;margin-top:4px;line-height:1.14;}
+  .sub{font-size:14px;color:var(--ink-soft);margin-top:7px;max-width:820px;font-weight:400;line-height:1.45;}
+  .stamp{text-align:right;font-family:'Barlow Semi Condensed';font-size:10.5px;
+    letter-spacing:.06em;color:var(--slate);line-height:1.6;text-transform:uppercase;white-space:nowrap;}
+  .stamp b{color:var(--ink);font-weight:600;}
+
+  /* ---- legend ---- */
+  .legend{display:flex;flex-wrap:wrap;gap:18px;padding:11px 30px;
+    border-bottom:1px solid var(--hair);background:#fbfcfd;
+    font-family:'Barlow Semi Condensed';font-size:11.5px;letter-spacing:.02em;color:var(--slate);}
+  .lg{display:flex;align-items:center;gap:7px}
+  .dot{width:11px;height:11px;border-radius:2px;display:inline-block}
+  .dot.block{background:var(--ra-red)}
+  .dot.crit{background:var(--amber)}
+  .dot.std{background:var(--slate-2)}
+  .lg .lock{font-size:12px}
+
+  /* ---- pipeline ---- */
+  .pipe{padding:8px 30px 4px;}
+  .phase{padding:16px 0 8px;}
+  .phase + .phase{border-top:1px solid var(--hair-2);}
+  .ph-head{display:flex;align-items:center;gap:11px;margin-bottom:13px;}
+  .ph-tag{font-family:'Barlow Semi Condensed';font-weight:700;font-size:11px;
+    color:var(--paper);padding:3px 9px;border-radius:2px;letter-spacing:.06em;text-transform:uppercase;}
+  .ph-1 .ph-tag{background:var(--ink)}
+  .ph-2 .ph-tag{background:var(--teal)}
+  .ph-3 .ph-tag{background:var(--amber)}
+  .ph-4 .ph-tag{background:var(--green)}
+  .ph-name{font-weight:600;font-size:15px;color:var(--ink);}
+  .ph-loc{font-family:'Barlow Semi Condensed';font-size:11.5px;color:var(--slate);letter-spacing:.03em;margin-left:auto;text-transform:uppercase;}
+
+  .row{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;}
+  .step{flex:1 1 0;min-width:210px;border:1px solid var(--hair);border-radius:2px;
+    padding:12px 13px 11px;background:var(--paper);position:relative;
+    border-top:3px solid var(--edge,var(--slate-2));display:flex;flex-direction:column;}
+  .ph-1 .step{--edge:var(--ink)}
+  .ph-2 .step{--edge:var(--teal)}
+  .ph-3 .step{--edge:var(--amber)}
+  .ph-4 .step{--edge:var(--green)}
+  .step.gate{border-color:var(--ra-red);--edge:var(--ra-red);background:var(--ra-red-soft);}
+  .s-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+  .s-no{font-family:'Barlow Semi Condensed';font-weight:700;font-size:12px;
+    color:var(--paper);background:var(--edge,var(--slate));width:20px;height:20px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .s-title{font-weight:700;font-size:13.5px;letter-spacing:-.01em;line-height:1.15;}
+  .s-lock{margin-left:auto;font-size:13px;color:var(--ra-red);}
+  .s-body{font-size:12px;color:var(--ink-soft);line-height:1.4;font-weight:400;flex:1;}
+  .s-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;}
+  .chip{font-family:'Barlow Semi Condensed';font-weight:600;font-size:10.5px;
+    padding:2px 7px;border-radius:2px;letter-spacing:.02em;color:var(--ink-soft);
+    background:var(--hair-2);border:1px solid var(--hair);}
+  .chip.t{background:var(--teal-soft);border-color:#cfe2e2;color:var(--teal);}
+  .chip.a{background:var(--amber-soft);border-color:#eddcac;color:#9a6f00;}
+  .chip.r{background:var(--ra-red-soft);border-color:#f3cfcc;color:var(--ra-red);}
+  .chip.opt{background:transparent;border-style:dashed;color:var(--slate);}
+
+  .flow{display:flex;align-items:center;justify-content:center;padding:6px 0 2px;}
+  .flow span{font-family:'Barlow Semi Condensed';font-size:10.5px;letter-spacing:.14em;
+    color:var(--slate-2);text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+  .flow span::before,.flow span::after{content:"";width:44px;height:0;border-top:1.5px dashed var(--hair);}
+
+  /* ---- cluster map ---- */
+  .clusters{padding:20px 30px 6px;border-top:2px solid var(--ink);margin-top:10px;}
+  .sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;}
+  .sec-t{font-weight:700;font-size:16px;letter-spacing:-.01em;}
+  .sec-d{font-size:12.5px;color:var(--slate);font-weight:400;}
+  .cgrid{display:grid;gap:9px;grid-template-columns:repeat(5,1fr);margin-top:13px;}
+  @media(max-width:1000px){.cgrid{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:620px){.cgrid{grid-template-columns:repeat(2,1fr);}}
+  .cl{border:1px solid var(--hair);border-radius:2px;padding:10px 11px 9px;background:var(--paper);
+    border-left:4px solid var(--cedge,var(--slate-2));}
+  .cl.block{--cedge:var(--ra-red)}
+  .cl.crit{--cedge:var(--amber)}
+  .cl-top{display:flex;align-items:baseline;gap:7px;}
+  .cl-id{font-family:'Barlow Semi Condensed';font-weight:700;font-size:16px;color:var(--ink);letter-spacing:.02em;}
+  .cl-flag{margin-left:auto;font-family:'Barlow Semi Condensed';font-weight:700;font-size:9.5px;
+    letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:2px;}
+  .cl-flag.block{color:var(--ra-red);background:var(--ra-red-soft);}
+  .cl-flag.crit{color:#9a6f00;background:var(--amber-soft);}
+  .cl-role{font-weight:600;font-size:12.5px;color:var(--ink-soft);margin-top:3px;line-height:1.25;}
+  .cl-note{font-family:'Barlow Semi Condensed';font-size:10.5px;color:var(--slate);margin-top:5px;letter-spacing:.02em;}
+
+  /* ---- callouts ---- */
+  .calls{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px 30px 4px;}
+  @media(max-width:720px){.calls{grid-template-columns:1fr;}}
+  .call{border:1px solid var(--hair);border-radius:2px;padding:13px 15px;background:#fbfcfd;}
+  .call.risk{border-left:4px solid var(--ra-red);}
+  .call.cost{border-left:4px solid var(--teal);}
+  .call-h{font-family:'Barlow Semi Condensed';font-weight:700;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;margin-bottom:6px;}
+  .call.risk .call-h{color:var(--ra-red);}
+  .call.cost .call-h{color:var(--teal);}
+  .call p{font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+  .call .k{color:var(--ink);font-weight:600;}
+
+  /* ---- footer ---- */
+  .foot{padding:16px 30px 20px;border-top:2px solid var(--ink);margin-top:16px;
+    display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;}
+  .foot p{font-size:11.5px;color:var(--slate);line-height:1.5;max-width:760px;}
+  .foot .src{font-family:'Barlow Semi Condensed';font-size:10.5px;color:var(--slate-2);
+    text-transform:uppercase;letter-spacing:.06em;text-align:right;white-space:nowrap;}
+  .foot .k{color:var(--ink-soft);font-weight:600;}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="top">
+    <div>
+      <div class="eyebrow">FTDS Engineering · Software Development Life Cycle</div>
+      <h1>How a change travels through FTDS —<br>from a developer's laptop to Production</h1>
+      <p class="sub">The path every code change follows: build locally, prove it through two mandatory automatic gates, run optional deeper checks, merge, then survive nightly / system testing and manual QA before release. Each stage names the AKS cluster that does the work.</p>
+    </div>
+    <div class="stamp">Confidential<br><b>FTDS · 0301 Dev/QA</b><br>Prepared by<br><b>Carlos Zapata</b></div>
+  </div>
+
+  <div class="legend">
+    <div class="lg"><span class="lock">🔒</span> Mandatory gate — blocks merge</div>
+    <div class="lg"><span class="dot block"></span> Merge-blocking cluster</div>
+    <div class="lg"><span class="dot crit"></span> Critical cluster</div>
+    <div class="lg"><span class="dot std"></span> Standard cluster</div>
+    <div class="lg" style="margin-left:auto">Dashed chip = optional / developer's call</div>
+  </div>
+
+  <div class="pipe">
+
+    <!-- PHASE 1 -->
+    <div class="phase ph-1">
+      <div class="ph-head">
+        <span class="ph-tag">Phase 1</span>
+        <span class="ph-name">Local development</span>
+        <span class="ph-loc">Developer's machine</span>
+      </div>
+      <div class="row">
+        <div class="step">
+          <div class="s-top"><span class="s-no">1</span><span class="s-title">Set up workspace</span></div>
+          <div class="s-body">Install DevTools + Rancher Desktop on a DevBox or local box (≥ 32 GB RAM); provisioned by Python scripts from the <b>ran-disp</b> repo. A new dev ramps in ~1–2 days.</div>
+          <div class="s-chips"><span class="chip">DevBox / local</span><span class="chip">Rancher Desktop</span></div>
+        </div>
+        <div class="step">
+          <div class="s-top"><span class="s-no">2</span><span class="s-title">Build the feature</span></div>
+          <div class="s-body">Clone the feature repo (e.g. <b>ra-excel</b>), then code in the IDE — Java toolchain, VS Code — on a branch off master.</div>
+          <div class="s-chips"><span class="chip">Feature branch</span></div>
+        </div>
+        <div class="step">
+          <div class="s-top"><span class="s-no">3</span><span class="s-title">Run it locally</span><span class="s-lock" style="color:var(--slate)">◇</span></div>
+          <div class="s-body">Try the branch before pushing — either in the cloud on the developer cluster, or fully local in Rancher Desktop. Debugging here is optional, the dev's call.</div>
+          <div class="s-chips"><span class="chip a">Cluster 10 · Rancher-Dev</span><span class="chip opt">local Rancher</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow"><span>push</span></div>
+
+    <!-- PHASE 2 -->
+    <div class="phase ph-2">
+      <div class="ph-head">
+        <span class="ph-tag">Phase 2</span>
+        <span class="ph-name">Continuous integration</span>
+        <span class="ph-loc">Pull request</span>
+      </div>
+      <div class="row">
+        <div class="step">
+          <div class="s-top"><span class="s-no">4</span><span class="s-title">Push → open PR</span></div>
+          <div class="s-body">Pushing the branch opens a pull request and automatically fires the quality gates. Nothing merges until they pass.</div>
+          <div class="s-chips"><span class="chip">Pull request</span></div>
+        </div>
+        <div class="step gate">
+          <div class="s-top"><span class="s-no">5</span><span class="s-title">Mandatory quality gates</span><span class="s-lock">🔒</span></div>
+          <div class="s-body"><b>BVTs</b> and <b>BITs</b> run automatically and must go green. This is the universal safety net — the minimum every change has to clear. No green, no merge.</div>
+          <div class="s-chips"><span class="chip r">Cluster 02 · BVTs</span><span class="chip r">Cluster 07 · BITs</span></div>
+        </div>
+        <div class="step">
+          <div class="s-top"><span class="s-no">6</span><span class="s-title">On-demand checks</span><span class="s-lock" style="color:var(--slate)">◇</span></div>
+          <div class="s-body">Optional. The dev or a reviewer can run deeper E2E / STEX subsets and performance/load sims on the CI clusters — judgment-based, not enforced.</div>
+          <div class="s-chips"><span class="chip a">Cluster 04 · CI</span><span class="chip opt">12 / 15 ad-hoc</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow"><span>reviewer approval + gates green</span></div>
+
+    <!-- PHASE 3 -->
+    <div class="phase ph-3">
+      <div class="ph-head">
+        <span class="ph-tag">Phase 3</span>
+        <span class="ph-name">Merge &amp; system test</span>
+        <span class="ph-loc">Master</span>
+      </div>
+      <div class="row">
+        <div class="step">
+          <div class="s-top"><span class="s-no">7</span><span class="s-title">Merge to main</span></div>
+          <div class="s-body">Gates green plus reviewer approval satisfy the Definition of Done; the change lands on master.</div>
+          <div class="s-chips"><span class="chip">Definition of Done</span></div>
+        </div>
+        <div class="step">
+          <div class="s-top"><span class="s-no">8</span><span class="s-title">Nightly &amp; STEX</span></div>
+          <div class="s-body">The nightly regression ("nailis") and STEX On-Demand with physical-control suites exercise the merged build across the fleet. Chaos testing runs alongside.</div>
+          <div class="s-chips"><span class="chip a">01 · STEX Nightly</span><span class="chip a">09 · STEX On-Demand</span><span class="chip">16 · Chaos</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow"><span>nightly build validated</span></div>
+
+    <!-- PHASE 4 -->
+    <div class="phase ph-4">
+      <div class="ph-head">
+        <span class="ph-tag">Phase 4</span>
+        <span class="ph-name">QA &amp; release</span>
+        <span class="ph-loc">Promotion</span>
+      </div>
+      <div class="row">
+        <div class="step">
+          <div class="s-top"><span class="s-no">9</span><span class="s-title">QA — manual</span></div>
+          <div class="s-body">Testers run manual suites against the nightly build. Sign-off here is what gates promotion out of Dev/QA.</div>
+          <div class="s-chips"><span class="chip">QA clusters</span><span class="chip">manual E2E</span></div>
+        </div>
+        <div class="step">
+          <div class="s-top"><span class="s-no">10</span><span class="s-title">Production</span></div>
+          <div class="s-body">The validated change ships to Prod — new customers and tenants land on the same platform the pipeline just protected.</div>
+          <div class="s-chips"><span class="chip t">Prod (0413 / 0485)</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CLUSTER MAP -->
+  <div class="clusters">
+    <div class="sec-h">
+      <span class="sec-t">The cluster map</span>
+      <span class="sec-d">Which Dev/QA cluster does what — and what breaks if it goes down.</span>
+    </div>
+    <div class="cgrid">
+      <div class="cl crit"><div class="cl-top"><span class="cl-id">01</span><span class="cl-flag crit">Critical</span></div><div class="cl-role">STEX Nightly</div><div class="cl-note">Runs the nightly ("nailis"). Down → no nightly; testers blocked.</div></div>
+      <div class="cl block"><div class="cl-top"><span class="cl-id">02</span><span class="cl-flag block">🔒 Blocks merge</span></div><div class="cl-role">BVTs &amp; DIST</div><div class="cl-note">Mandatory gate. Down → nobody merges → program stalls.</div></div>
+      <div class="cl crit"><div class="cl-top"><span class="cl-id">04</span><span class="cl-flag crit">Critical</span></div><div class="cl-role">CI On-Demand</div><div class="cl-note">~$24K/mo &amp; rising. Overlapping subsets re-run the same tests.</div></div>
+      <div class="cl block"><div class="cl-top"><span class="cl-id">07</span><span class="cl-flag block">🔒 Blocks merge</span></div><div class="cl-role">CI BITs</div><div class="cl-note">Mandatory gate. Down → nobody merges → program stalls.</div></div>
+      <div class="cl crit"><div class="cl-top"><span class="cl-id">09</span><span class="cl-flag crit">Critical</span></div><div class="cl-role">STEX On-Demand</div><div class="cl-note">Physical-control suites. Down → critical / manual tests stop.</div></div>
+      <div class="cl"><div class="cl-top"><span class="cl-id">10</span></div><div class="cl-role">Rancher — Developer</div><div class="cl-note">Cloud debugging / running a branch before push.</div></div>
+      <div class="cl"><div class="cl-top"><span class="cl-id">12</span></div><div class="cl-role">CI Ad-hoc</div><div class="cl-note">Interchangeable with 15; manual, tester-selected runs.</div></div>
+      <div class="cl"><div class="cl-top"><span class="cl-id">14</span></div><div class="cl-role">CI AOps</div><div class="cl-note">Automated-ops CI runs.</div></div>
+      <div class="cl"><div class="cl-top"><span class="cl-id">15</span></div><div class="cl-role">CI Ad-hoc</div><div class="cl-note">Interchangeable with 12; manual, tester-selected runs.</div></div>
+      <div class="cl"><div class="cl-top"><span class="cl-id">16</span></div><div class="cl-role">Chaos testing</div><div class="cl-note">Resilience / fault-injection suites.</div></div>
+    </div>
+  </div>
+
+  <!-- CALLOUTS -->
+  <div class="calls">
+    <div class="call risk">
+      <div class="call-h">Where it stalls · escalation</div>
+      <p>The five load-bearing clusters are <span class="k">01, 02, 04, 07, 09</span>. If <span class="k">02 or 07</span> go red the whole program stops merging — that's the call to <span class="k">Tim Florenki</span>, with Rahul on the program impact. If the <span class="k">nightly (01 / 09)</span> breaks, that's <span class="k">Andrea</span> on the test side.</p>
+    </div>
+    <div class="call cost">
+      <div class="call-h">FinOps lens · biggest lever</div>
+      <p>Cluster 04 alone runs <span class="k">~$24K/month (~$285K/yr)</span> and climbing, driven by <span class="k">overlapping on-demand subsets</span> re-running the same tests. The optimization isn't less testing — it's <span class="k">de-duplicating subsets</span> and parking idle CI clusters (≈15 min to spin back up).</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <p><span class="k">Read it this way:</span> a change only reaches Production by clearing every phase left to right. Phase&nbsp;2's two gates are the only <em>mandatory automatic</em> stops — everything in Phase&nbsp;1 and the on-demand checks are the developer's judgment. The clusters are the same physical fleet the FinOps program monitors, which is why criticality and cost sit on the same map.</p>
+    <div class="src">Source: FTDS engineering working session (SDLC walkthrough)<br>Cluster roles cross-checked vs. FinOps Board roll-out plan · Jun 2026<br>Prepared by Carlos Zapata</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{
+  "name": "ftds-devex-command-center",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Progress tracker for the FTDS Developer Experience 90-day execution plan.",
+  "scripts": {
+    "dev": "next dev --turbo",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:seed:generate": "tsx scripts/generate-devex-seed.mjs",
+    "db:deploy:devex": "node scripts/deploy-devex-schema.mjs",
+    "db:expose:devex": "node scripts/expose-devex-schema.mjs",
+    "db:fix:postgrest": "node scripts/fix-postgrest-devex.mjs",
+    "db:test:devex": "node scripts/test-supabase-devex.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.3",
+    "@supabase/supabase-js": "^2.110.7",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.1.0",
+    "pg": "^8.22.0",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.23.1",
+    "typescript": "^5.7.0"
+  }
+}
