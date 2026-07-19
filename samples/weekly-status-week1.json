@@ -1,0 +1,46 @@
+{
+  "tasks": [
+    { "id": "e1-1", "status": "done" },
+    { "id": "e1-2", "status": "in_progress" },
+    { "id": "e1-3", "status": "in_progress" },
+    { "id": "e1-4", "status": "not_started" },
+    { "id": "e1-5", "status": "in_progress" },
+    { "id": "e1-6", "status": "not_started" },
+    { "id": "e2-1", "status": "in_progress" },
+    {
+      "id": "e2-2",
+      "status": "blocked",
+      "blockerNote": "Waiting on Gate-2 channel decision — Qualtrics vs. Microsoft Forms still under review with HR."
+    },
+    { "id": "e2-3", "status": "in_progress" },
+    { "id": "e2-4", "status": "done" },
+    { "id": "e2-5", "status": "in_progress" },
+    { "id": "e2-6", "status": "not_started" },
+    { "id": "e4-1", "status": "in_progress" },
+    { "id": "e7-1", "status": "done" },
+    { "id": "e8-3", "status": "in_progress" },
+    { "id": "e9-1", "status": "done" },
+    { "id": "e10-1", "status": "in_progress" }
+  ],
+  "milestones": [
+    { "id": "m1", "status": "on_track" },
+    { "id": "m2", "status": "at_risk" }
+  ],
+  "gates": [
+    {
+      "id": "gate-1",
+      "status": "answered",
+      "answer": "GitHub Actions is authoritative for deploy frequency; lead time uses merge-to-main timestamps from GitHub API."
+    },
+    {
+      "id": "gate-3",
+      "status": "waived",
+      "gapPlan": "AI tool telemetry deferred to Pulse Q13 self-report for v1; Copilot usage API access requested for Q+1."
+    },
+    {
+      "id": "gate-4",
+      "status": "answered",
+      "answer": "All teams except Platform-Infra meet the 20-merge floor; Platform-Infra gets a 12-week extended window."
+    }
+  ]
+}

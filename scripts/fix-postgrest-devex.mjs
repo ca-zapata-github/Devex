@@ -62,6 +62,7 @@ async function main() {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const token = env.SUPABASE_ACCESS_TOKEN;
   const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const forceReload = process.argv.includes("--reload");
 
   if (!url || !token || !anonKey) {
     console.error("Need NEXT_PUBLIC_SUPABASE_URL, SUPABASE_ACCESS_TOKEN, NEXT_PUBLIC_SUPABASE_ANON_KEY");
@@ -70,13 +71,18 @@ async function main() {
 
   const ref = projectRefFromUrl(url);
   const before = await probe(url, anonKey);
-  if (before.ok) {
+  if (before.ok && !forceReload) {
     console.log("✅ devex already live on Data API — no fix needed.");
+    console.log("   After new tables: npm run db:reload:postgrest");
     return;
   }
 
-  const hint = before.body.match(/Only the following schemas are exposed: ([^"]+)/);
-  console.log(`Before: runtime schemas = ${hint?.[1] ?? "unknown"}`);
+  if (forceReload) {
+    console.log("▶ Forcing PostgREST schema reload (new tables)...");
+  } else {
+    const hint = before.body.match(/Only the following schemas are exposed: ([^"]+)/);
+    console.log(`Before: runtime schemas = ${hint?.[1] ?? "unknown"}`);
+  }
 
   const sql = readFileSync(
     join(root, "supabase/migrations/0002_expose_devex_postgrest.sql"),
@@ -89,7 +95,7 @@ async function main() {
     await new Promise((r) => setTimeout(r, 3000));
     const after = await probe(url, anonKey);
     if (after.ok) {
-      console.log("\n✅ devex is now live. Run: npm run db:test:devex");
+      console.log("\n✅ PostgREST reloaded. Run: npm run db:test:devex");
       return;
     }
     process.stdout.write(".");

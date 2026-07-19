@@ -1,6 +1,13 @@
 import type { DataAdapter } from "@/data/adapter";
 import { planSeed } from "@/data/seed/plan";
+import { governanceSeed } from "@/data/seed/governance";
+import { metricsSeed } from "@/data/seed/metrics";
 import "@/data/seed/validate";
+import {
+  applyGatePatches,
+  applyMilestonePatches,
+  applyTaskPatches,
+} from "@/data/overlays/memory-overrides";
 import type { Phase, Task, TaskFilters } from "@/types/domain";
 
 function phaseDayRange(phase: Phase): { startDay: number; endDay: number } {
@@ -43,7 +50,7 @@ export class InMemoryAdapter implements DataAdapter {
   }
 
   async getMilestones() {
-    return planSeed.milestones;
+    return applyMilestonePatches(planSeed.milestones);
   }
 
   async getEpics() {
@@ -51,10 +58,30 @@ export class InMemoryAdapter implements DataAdapter {
   }
 
   async getTasks(filters?: TaskFilters) {
-    return applyTaskFilters(planSeed.tasks, filters, planSeed.phases);
+    return applyTaskFilters(
+      applyTaskPatches(planSeed.tasks),
+      filters,
+      planSeed.phases,
+    );
   }
 
   async getGates() {
-    return planSeed.gates;
+    return applyGatePatches(planSeed.gates);
+  }
+
+  async getRisks() {
+    return governanceSeed.risks;
+  }
+
+  async getDecisions() {
+    return governanceSeed.decisions;
+  }
+
+  async getExperiments() {
+    return metricsSeed.experiments;
+  }
+
+  async getMetricSnapshots() {
+    return metricsSeed.metricSnapshots;
   }
 }

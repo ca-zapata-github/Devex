@@ -12,6 +12,7 @@
     "db:deploy:devex": "node scripts/deploy-devex-schema.mjs",
     "db:expose:devex": "node scripts/expose-devex-schema.mjs",
     "db:fix:postgrest": "node scripts/fix-postgrest-devex.mjs",
+    "db:reload:postgrest": "node scripts/fix-postgrest-devex.mjs --reload",
     "db:test:devex": "node scripts/test-supabase-devex.mjs"
   },
   "dependencies": {

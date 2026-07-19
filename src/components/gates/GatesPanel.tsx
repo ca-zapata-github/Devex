@@ -1,10 +1,12 @@
 import type { Gate } from "@/types/domain";
+import { GateEditForm } from "@/components/edit/GateEditForm";
 import { formatShortDate, GATE_DEADLINE, todayIso } from "@/lib/initiative-dates";
 import { ragClasses } from "@/lib/rag";
 
 interface GatesPanelProps {
   gates: Gate[];
   dependentTaskCountByGate: Record<string, number>;
+  canEdit?: boolean;
 }
 
 function gateStatusLabel(status: Gate["status"]): string {
@@ -25,7 +27,7 @@ function gateTileRag(gate: Gate, today: string): "green" | "amber" | "red" {
   return "amber";
 }
 
-export function GatesPanel({ gates, dependentTaskCountByGate }: GatesPanelProps) {
+export function GatesPanel({ gates, dependentTaskCountByGate, canEdit = false }: GatesPanelProps) {
   const today = todayIso();
   const pastDeadline = today > GATE_DEADLINE;
   const openPastDeadline = gates.filter((g) => g.status === "open" && pastDeadline);
@@ -106,6 +108,8 @@ export function GatesPanel({ gates, dependentTaskCountByGate }: GatesPanelProps)
                   Overdue — open past {formatShortDate(GATE_DEADLINE)}
                 </p>
               ) : null}
+
+              {canEdit ? <GateEditForm gate={gate} /> : null}
             </article>
           );
         })}

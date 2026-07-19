@@ -1,4 +1,5 @@
 import type { Gate, Task } from "@/types/domain";
+import { TaskEditForm } from "@/components/edit/TaskEditForm";
 import {
   formatTaskWindow,
   taskStatusClasses,
@@ -9,9 +10,10 @@ import {
 interface TaskCardProps {
   task: Task;
   gatesById: Map<string, Gate>;
+  canEdit?: boolean;
 }
 
-export function TaskCard({ task, gatesById }: TaskCardProps) {
+export function TaskCard({ task, gatesById, canEdit = false }: TaskCardProps) {
   const gate = task.gateDep ? gatesById.get(task.gateDep) : undefined;
   const blockedMissingNote = task.status === "blocked" && !task.blockerNote;
 
@@ -92,6 +94,8 @@ export function TaskCard({ task, gatesById }: TaskCardProps) {
           </span>
         </p>
       ) : null}
+
+      {canEdit ? <TaskEditForm task={task} /> : null}
     </article>
   );
 }

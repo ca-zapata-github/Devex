@@ -1,4 +1,5 @@
 import type { Gate, Milestone, Phase } from "@/types/domain";
+import { MilestoneEditForm } from "@/components/edit/MilestoneEditForm";
 import {
   BASELINE_WINDOW,
   formatShortDate,
@@ -20,6 +21,7 @@ interface RoadmapTimelineProps {
   phases: Phase[];
   milestones: Milestone[];
   gates: Gate[];
+  canEdit?: boolean;
 }
 
 const PHASE_COLORS = [
@@ -28,7 +30,7 @@ const PHASE_COLORS = [
   "bg-teal-100 border-teal-200 text-teal-900",
 ];
 
-export function RoadmapTimeline({ phases, milestones, gates }: RoadmapTimelineProps) {
+export function RoadmapTimeline({ phases, milestones, gates, canEdit = false }: RoadmapTimelineProps) {
   const today = todayIso();
   const overallRag = deriveInitiativeRag(milestones, gates, today);
   const todayPct = timelinePercent(today);
@@ -163,6 +165,7 @@ export function RoadmapTimeline({ phases, milestones, gates }: RoadmapTimelinePr
                       <li key={c}>{c}</li>
                     ))}
                   </ul>
+                  {canEdit ? <MilestoneEditForm milestone={m} /> : null}
                 </div>
               </details>
             );

@@ -11,6 +11,10 @@ import type {
   WayTag,
 } from "@/types/domain";
 import type { InitiativeLeadCode } from "@/types/owners";
+import type { Decision, Risk } from "@/types/governance";
+import type { Experiment, ExperimentStatus, MetricSnapshot } from "@/types/metrics";
+import { governanceSeed } from "@/data/seed/governance";
+import { metricsSeed } from "@/data/seed/metrics";
 
 type PhaseRow = {
   id: string;
@@ -177,6 +181,140 @@ export class SupabaseAdapter implements DataAdapter {
     if (error) throw error;
     return (data as GateRow[]).map(mapGate);
   }
+
+  async getRisks() {
+    const { data, error } = await this.client.from("risks").select("*").order("id");
+    if (error?.code === "PGRST205") return governanceSeed.risks;
+    if (error) throw error;
+    return (data as RiskRow[]).map(mapRisk);
+  }
+
+  async getDecisions() {
+    const { data, error } = await this.client.from("decisions").select("*").order("code");
+    if (error?.code === "PGRST205") return governanceSeed.decisions;
+    if (error) throw error;
+    return (data as DecisionRow[]).map(mapDecision);
+  }
+
+  async getExperiments() {
+    const { data, error } = await this.client.from("experiments").select("*").order("start_tag");
+    if (error?.code === "PGRST205") return metricsSeed.experiments;
+    if (error) throw error;
+    return (data as ExperimentRow[]).map(mapExperiment);
+  }
+
+  async getMetricSnapshots() {
+    const { data, error } = await this.client.from("metric_snapshots").select("*").order("metric_key");
+    if (error?.code === "PGRST205") return metricsSeed.metricSnapshots;
+    if (error) throw error;
+    return (data as MetricSnapshotRow[]).map(mapMetricSnapshot);
+  }
+}
+
+type RiskRow = {
+  id: string;
+  text: string;
+  likelihood: string;
+  impact: string | null;
+  owner: InitiativeLeadCode;
+  mitigation: string;
+  status: Risk["status"];
+  review_date: string | null;
+};
+
+type DecisionRow = {
+  id: string;
+  code: string;
+  text: string;
+  status: Decision["status"];
+  closed_date: string | null;
+  closed_by: InitiativeLeadCode | null;
+  rationale: string | null;
+  locked: boolean;
+};
+
+function mapRisk(row: RiskRow): Risk {
+  return {
+    id: row.id,
+    text: row.text,
+    likelihood: row.likelihood,
+    impact: row.impact ?? undefined,
+    owner: row.owner,
+    mitigation: row.mitigation,
+    status: row.status,
+    reviewDate: row.review_date ?? undefined,
+  };
+}
+
+function mapDecision(row: DecisionRow): Decision {
+  return {
+    id: row.id,
+    code: row.code,
+    text: row.text,
+    status: row.status,
+    closedDate: row.closed_date ?? undefined,
+    closedBy: row.closed_by ?? undefined,
+    rationale: row.rationale ?? undefined,
+    locked: row.locked,
+  };
+}
+
+type ExperimentRow = {
+  id: string;
+  task_id: string;
+  hypothesis: string;
+  metric: string;
+  stage: string;
+  start_tag: string;
+  end_tag: string | null;
+  status: ExperimentStatus;
+  pre_median: number | null;
+  pre_spread: number | null;
+  pre_n: number | null;
+  post_median: number | null;
+  post_spread: number | null;
+  post_n: number | null;
+  confounds: string[];
+};
+
+type MetricSnapshotRow = {
+  metric_key: MetricSnapshot["metricKey"];
+  snapshot_date: string;
+  headline_value: string | null;
+  baseline_status: MetricSnapshot["baselineStatus"];
+  direction: MetricSnapshot["direction"];
+};
+
+function mapExperiment(row: ExperimentRow): Experiment {
+  return {
+    id: row.id,
+    taskId: row.task_id,
+    hypothesis: row.hypothesis,
+    metric: row.metric,
+    stage: row.stage,
+    startTag: row.start_tag,
+    endTag: row.end_tag ?? undefined,
+    status: row.status,
+    pre:
+      row.pre_median != null && row.pre_spread != null && row.pre_n != null
+        ? { median: row.pre_median, spread: row.pre_spread, n: row.pre_n }
+        : undefined,
+    post:
+      row.post_median != null && row.post_spread != null && row.post_n != null
+        ? { median: row.post_median, spread: row.post_spread, n: row.post_n }
+        : undefined,
+    confounds: row.confounds ?? [],
+  };
+}
+
+function mapMetricSnapshot(row: MetricSnapshotRow): MetricSnapshot {
+  return {
+    metricKey: row.metric_key,
+    date: String(row.snapshot_date).slice(0, 10),
+    headlineValue: row.headline_value ?? undefined,
+    baselineStatus: row.baseline_status,
+    direction: row.direction,
+  };
 }
 
 function daysSinceInitiativeStart(isoDate: string): number {

@@ -13,6 +13,7 @@ interface BacklogBoardProps {
   phases: Phase[];
   tasks: Task[];
   gates: Gate[];
+  canEdit?: boolean;
 }
 
 const VIEW_MODES: { id: BacklogViewMode; label: string; hint?: string }[] = [
@@ -100,7 +101,7 @@ function buildGroups(
   }
 }
 
-export function BacklogBoard({ epics, phases, tasks, gates }: BacklogBoardProps) {
+export function BacklogBoard({ epics, phases, tasks, gates, canEdit = false }: BacklogBoardProps) {
   const [view, setView] = useState<BacklogViewMode>("epic");
   const [epicFilter, setEpicFilter] = useState("");
   const [phaseFilter, setPhaseFilter] = useState("");
@@ -263,7 +264,7 @@ export function BacklogBoard({ epics, phases, tasks, gates }: BacklogBoardProps)
             </header>
             <div className="grid gap-3 sm:grid-cols-2">
               {group.tasks.map((task) => (
-                <TaskCard key={task.id} task={task} gatesById={gatesById} />
+                <TaskCard key={task.id} task={task} gatesById={gatesById} canEdit={canEdit} />
               ))}
             </div>
           </div>

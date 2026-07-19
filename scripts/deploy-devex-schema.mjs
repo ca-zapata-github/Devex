@@ -22,7 +22,15 @@ const root = join(__dirname, "..");
 
 const SQL_FILES = [
   "supabase/migrations/0001_devex_schema.sql",
+  "supabase/migrations/0003_app_meta.sql",
+  "supabase/migrations/0004_status_updates.sql",
+  "supabase/migrations/0005_risks_decisions.sql",
+  "supabase/migrations/0006_experiments_metrics.sql",
   "supabase/seed/devex_plan.sql",
+  "supabase/seed/devex_governance.sql",
+  "supabase/seed/devex_metrics.sql",
+  "supabase/migrations/0007_survey.sql",
+  "supabase/seed/devex_survey.sql",
 ];
 
 function loadEnvLocal() {
@@ -167,6 +175,7 @@ async function main() {
   }
 
   console.log("\n✅ DevEx schema deploy complete.");
+  console.log("   Reload PostgREST cache: npm run db:reload:postgrest");
   console.log("   Verify: npm run db:test:devex");
 }
 

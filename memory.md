@@ -16,6 +16,12 @@ Track progress against the FTDS DevEx initiative's 90-day execution plan (Jul 20
 - Working: Step 3 — Roadmap & Milestones landing (timeline, phases, baseline bar, M1–M6, derived RAG, gate risk).
 - Working: Step 4 — Backlog Board at `/backlog` (by epic/phase/Way/owner views, filters, task cards w/ gate badges).
 - Working: Step 5 — Gates Panel at `/gates` (4 instrumentation tiles, overdue red state, downstream task counts).
+- Working: MVP hardening — lead edit token auth (`/login`), inline status edits (tasks/milestones/gates), JSON bulk import (`/import`), blocked-task + gate validation, sample-data banner dismiss (requires `0003_app_meta` migration).
+- Working: Readout Mode at `/readout` — auto-assembled stakeholder summary (5 PRD sections), print/PDF + copy markdown.
+- Working: StatusUpdate snapshots — leads save frozen readout (`0004_status_updates`); browse at `/readout/history`.
+- Working: Risks & Decisions at `/risks` — plan risk register + DEC-1…4 + locked D1–D11; enriches readout risks/asks.
+- Working: Experiment Cards + North-Star strip — `/experiments`, north-star on home + readout §2/§3; migration `0006_experiments_metrics`.
+- Working: Survey Module — `/survey` hub, anonymous respond, results with G7 floor; migration `0007_survey`.
 
 ## Next steps
 - [x] Scaffold Next.js app, connect Supabase
@@ -24,6 +30,12 @@ Track progress against the FTDS DevEx initiative's 90-day execution plan (Jul 20
 - [x] Build Roadmap & Milestones screen
 - [x] Build Backlog Board (filters: by epic / by phase / by Way tag / by owner)
 - [x] Build Gates Panel (red state if any gate open past Aug 7)
+- [x] MVP hardening (edit UI, auth, JSON import, banner dismiss)
+- [x] Readout Mode (stakeholder summary, print/export)
+- [x] StatusUpdate snapshots (freeze readout per send)
+- [x] Phase 2: Risks & Decisions
+- [x] Phase 2: Experiment Cards + North-Star strip
+- [x] Phase 2: Survey Module (Baseline Pulse + results)
 - [ ] Deploy to Vercel, share read-only link for stakeholder review
 
 ## Commands
@@ -31,6 +43,8 @@ Track progress against the FTDS DevEx initiative's 90-day execution plan (Jul 20
 - `npm run db:deploy:devex` — deploy `devex` schema + seed (does NOT touch AgileRadar `public`)
 - `npm run db:fix:postgrest` — fix PGRST106 (see below)
 - `npm run db:test:devex` — verify Data API reads `devex.phases`
+- Set `DEVEX_EDIT_TOKEN` in `.env.local` (server-only) — leads sign in at `/login`
+- After deploy: `npm run db:deploy:devex` applies migration `0003_app_meta` (sample banner dismiss)
 
 ## Supabase troubleshooting (shared AgileRadar project)
 
@@ -49,6 +63,36 @@ npm run db:test:devex   # expect: data: [{ id: 'phase-a' }], REST status 200
 **If still failing:** Dashboard → Integrations → Data API → check **Hardening** tab as well as Settings → Exposed schemas → Save → wait 60s → run fix again.
 
 ## Session log (newest at top)
+### 2026-07-19 (session 10)
+- Did: Survey Module — Baseline Pulse form (Q1–Q15 verbatim), anonymous respond flow, results aggregates with G7 floor, lead admin (create/open/close runs), `0007` migration.
+- Result: Build pending verify; run `npm run db:deploy:devex` + `npm run db:reload:postgrest`.
+- Next: Vercel deploy.
+
+### 2026-07-19 (session 9)
+- Did: Phase 2 Experiment Cards + North-Star strip — types/seed, `0006` migration, `/experiments`, north-star on roadmap + readout, CSS distribution bars.
+- Result: Build pending verify; run `npm run db:deploy:devex` + `npm run db:reload:postgrest` for Supabase.
+- Next: Vercel deploy or Survey Module.
+
+### 2026-07-18 (session 8)
+- Did: Phase 2 Risks & Decisions — types, seed, `0005` migration, `/risks` page, readout integration (register risks + open DEC in asks).
+- Result: Deploy + PostgREST reload OK; build green.
+- Next: Experiment Cards + North-Star strip, or Vercel deploy.
+
+### 2026-07-18 (session 7)
+- Did: StatusUpdate snapshots — `0004_status_updates` migration, save from live readout (leads only), `/readout/history` list + `/readout/history/[id]` archived view.
+- Result: Build green. Biweekly send workflow: edit statuses → readout → save snapshot.
+- Next: Phase 2 (Risks & Decisions recommended) or Vercel deploy.
+
+### 2026-07-18 (session 6)
+- Did: Readout Mode (`/readout`) — auto-assembled 5-section stakeholder summary, print/PDF, copy markdown.
+- Result: Build green. Sections 2 & 3 partial until Phase 2 north-star + experiments.
+- Next: StatusUpdate snapshots or Phase 2 features.
+
+### 2026-07-18 (session 5)
+- Did: MVP hardening — `DEVEX_EDIT_TOKEN` lead auth (`/login`, cookie session), server actions + Supabase writes for task/milestone/gate updates, inline edit forms on all three screens, `/import` JSON bulk path, validation (blocked note, gate answer/gap plan), `0003_app_meta` migration for dismissible SAMPLE DATA banner.
+- Result: Build green. Stakeholders read-only; leads edit after sign-in.
+- Next: Add `DEVEX_EDIT_TOKEN` to `.env.local`, run `npm run db:deploy:devex` for banner table, then Vercel when ready.
+
 ### 2026-07-18 (session 4)
 - Did: PGRST106 troubleshooting doc in memory.md. Step 3 — Roadmap & Milestones. Step 4 — Backlog Board (`/backlog`). Step 5 — Gates Panel (`/gates`). App nav across all three screens.
 - Result: MVP screens complete; build green.
